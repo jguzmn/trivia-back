@@ -3,6 +3,7 @@ import { response } from "./utils/response.js"
 import user from "../models/user.js"
 import bcrypt from 'bcrypt'
 import { login_regex, user_regex } from "./validation/auth.validation.js"
+import  jwt  from "jsonwebtoken"
 
 const register = async user_request => {
 
@@ -45,7 +46,18 @@ const login = async (login_request) => {
     const valid_password = await bcrypt.compare(login_request.password,user_db.password)
     if (!valid_password) return response(false,"Incorrect password")
 
-    return response(true,'Login success',user_db)
+    const payload = {
+        id: user_db.id,
+        name:user_db.name,
+        cel:user_db.cel
+    }
+
+    const sign_options = {expiresIn:'20s'}
+
+    const token = jwt.sign(payload, process.env.TOKEN,sign_options)
+
+
+    return response(true,'Login success',token)
 
 
 }
