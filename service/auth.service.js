@@ -1,16 +1,8 @@
-import Joi from "joi"
+
 import { response } from "./utils/response.js"
 import user from "../models/user.js"
 import bcrypt from 'bcrypt'
-
-const user_regex = Joi.object({
-    name: Joi.string().min(4).max(16).required(),
-    nickname: Joi.string().min(4).max(16).required(),
-    cel: Joi.string().min(10).max(15).required(),
-    password: Joi.string().min(4).max(16).required(),
-    confirm_password:Joi.ref('password'),
-    email: Joi.string().min(6).max(56).email()
-})
+import { login_regex, user_regex } from "./validation/auth.validation.js"
 
 const register = async user_request => {
 
@@ -42,7 +34,19 @@ const register = async user_request => {
 }
 
 
-const login = () => {
+const login = async (login_request) => {
+
+    const {error} = login_regex.validate()
+    if (error) return response(false,error.details[0].message)
+
+    const user_db = await user.findOne({nickname:login_request.nickname})
+    if (!user_db) return response(false,"User  don't exist")
+
+    const valid_password = await bcrypt.compare(login_request.password,user_db.password)
+    if (!valid_password) return response(false,"Incorrect password")
+
+    return response(true,'Login success',user_db)
+
 
 }
 
